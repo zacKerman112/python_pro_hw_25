@@ -18,7 +18,12 @@ class PushNotificationConsumer(AsyncJsonWebsocketConsumer):
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
     async def receive_json(self, content: dict[str, Any]) -> None:
-        """Receive a message from one client and broadcast it to everyone."""
+        """Receive a message from an authenticated user and broadcast it."""
+        user = self.scope["user"]
+        if not user.is_authenticated:
+            await self.send_json({"error": "auth_required"})
+            return
+
         message = str(content.get("message", "")).strip()
         if not message:
             return
@@ -27,10 +32,16 @@ class PushNotificationConsumer(AsyncJsonWebsocketConsumer):
             self.group_name,
             {
                 "type": "push.notification",
+                "username": user.username,
                 "message": message,
             },
         )
 
     async def push_notification(self, event: dict[str, Any]) -> None:
         """Deliver a push notification to a single WebSocket client."""
-        await self.send_json({"message": event["message"]})
+        await self.send_json(
+            {
+                "username": event["username"],
+                "message": event["message"],
+            }
+        )

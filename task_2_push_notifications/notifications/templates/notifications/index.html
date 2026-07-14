@@ -21,7 +21,21 @@
         border-radius: 16px;
         box-shadow: 0 16px 40px rgba(23, 32, 51, 0.12);
         padding: 32px;
-        width: min(520px, calc(100vw - 32px));
+        width: min(560px, calc(100vw - 32px));
+      }
+
+      .auth-bar {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .auth-bar a {
+        color: #2563eb;
+        text-decoration: none;
       }
 
       .form {
@@ -36,6 +50,11 @@
         flex: 1;
         font-size: 16px;
         padding: 12px 14px;
+      }
+
+      input:disabled {
+        background: #f8fafc;
+        color: #94a3b8;
       }
 
       button {
@@ -53,9 +72,18 @@
         cursor: not-allowed;
       }
 
-      .status {
+      .status,
+      .guest-note {
         color: #64748b;
         font-size: 14px;
+      }
+
+      .guest-note {
+        background: #fff7ed;
+        border-left: 4px solid #f59e0b;
+        border-radius: 10px;
+        margin-bottom: 16px;
+        padding: 12px 14px;
       }
 
       .notifications {
@@ -70,27 +98,62 @@
         border-radius: 10px;
         padding: 12px 14px;
       }
+
+      .username {
+        color: #1d4ed8;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
     </style>
   </head>
   <body>
     <main class="card">
-      <h1>Push notifications</h1>
+      <div class="auth-bar">
+        <h1>Push notifications</h1>
+        {% if user.is_authenticated %}
+          <div>
+            Ви увійшли як <strong>{{ user.username }}</strong>
+            <a href="{% url 'logout' %}">Вийти</a>
+          </div>
+        {% else %}
+          <div>
+            <a href="{% url 'login' %}">Увійти</a>
+            |
+            <a href="{% url 'signup' %}">Реєстрація</a>
+          </div>
+        {% endif %}
+      </div>
+
       <p class="status" id="status">Підключення...</p>
+
+      {% if not user.is_authenticated %}
+        <p class="guest-note">
+          Ви переглядаєте нотифікації як гість. Щоб надсилати повідомлення, увійдіть або зареєструйтесь.
+        </p>
+      {% endif %}
 
       <form class="form" id="notification-form">
         <input
           id="message-input"
           autocomplete="off"
-          placeholder="Введіть повідомлення"
+          placeholder="{% if user.is_authenticated %}Введіть повідомлення{% else %}Гостям писати заборонено{% endif %}"
           type="text"
+          {% if not user.is_authenticated %}disabled{% endif %}
         />
-        <button id="send-button" type="submit" disabled>Надіслати</button>
+        <button
+          id="send-button"
+          type="submit"
+          {% if not user.is_authenticated %}disabled{% endif %}
+        >
+          Надіслати
+        </button>
       </form>
 
       <section class="notifications" id="notifications"></section>
     </main>
 
     <script>
+      const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
       const form = document.querySelector("#notification-form");
       const input = document.querySelector("#message-input");
       const sendButton = document.querySelector("#send-button");
@@ -101,12 +164,20 @@
 
       socket.addEventListener("open", () => {
         statusElement.textContent = "Підключено";
-        sendButton.disabled = false;
+        if (isAuthenticated) {
+          sendButton.disabled = false;
+        }
       });
 
       socket.addEventListener("message", (event) => {
         const data = JSON.parse(event.data);
-        addNotification(data.message);
+
+        if (data.error === "auth_required") {
+          statusElement.textContent = "Гостям писати заборонено";
+          return;
+        }
+
+        addNotification(data.username, data.message);
       });
 
       socket.addEventListener("close", () => {
@@ -122,6 +193,10 @@
       form.addEventListener("submit", (event) => {
         event.preventDefault();
 
+        if (!isAuthenticated) {
+          return;
+        }
+
         const message = input.value.trim();
         if (!message || socket.readyState !== WebSocket.OPEN) {
           return;
@@ -132,10 +207,18 @@
         input.focus();
       });
 
-      function addNotification(message) {
-        const notification = document.createElement("div");
+      function addNotification(username, message) {
+        const notification = document.createElement("article");
         notification.className = "notification";
-        notification.textContent = message;
+
+        const author = document.createElement("div");
+        author.className = "username";
+        author.textContent = username;
+
+        const text = document.createElement("div");
+        text.textContent = message;
+
+        notification.append(author, text);
         notificationsElement.prepend(notification);
       }
     </script>
