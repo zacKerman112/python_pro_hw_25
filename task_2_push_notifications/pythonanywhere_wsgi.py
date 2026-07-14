@@ -4,14 +4,14 @@
 import os
 import sys
 
-PROJECT_HOME = "/home/YOUR_USERNAME/hw_25/task_2_push_notifications"
+PROJECT_HOME = "/home/zach4r/python_pro_hw_25/task_2_push_notifications"
 
 if PROJECT_HOME not in sys.path:
     sys.path.insert(0, PROJECT_HOME)
 
 os.environ["DJANGO_SETTINGS_MODULE"] = "notification_project.settings"
 os.environ["DJANGO_DEBUG"] = "False"
-os.environ["PYTHONANYWHERE_DOMAIN"] = "YOUR_USERNAME.pythonanywhere.com"
+os.environ["PYTHONANYWHERE_DOMAIN"] = "zach4r.pythonanywhere.com"
 
 from django.core.wsgi import get_wsgi_application
 
