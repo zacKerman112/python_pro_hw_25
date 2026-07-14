@@ -1,11 +1,23 @@
+from __future__ import annotations
+
+import os
 from pathlib import Path
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "django-insecure-dev-push-notifications"
-DEBUG = True
+SECRET_KEY = os.getenv(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-dev-push-notifications",
+)
+
+DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
+
+PYTHONANYWHERE_DOMAIN = os.getenv("PYTHONANYWHERE_DOMAIN", "")
+
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+if PYTHONANYWHERE_DOMAIN:
+    ALLOWED_HOSTS.append(PYTHONANYWHERE_DOMAIN)
 
 INSTALLED_APPS = [
     "daphne",
@@ -62,10 +74,15 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
+
+if PYTHONANYWHERE_DOMAIN:
+    CSRF_TRUSTED_ORIGINS = [f"https://{PYTHONANYWHERE_DOMAIN}"]
 
 CHANNEL_LAYERS = {
     "default": {
