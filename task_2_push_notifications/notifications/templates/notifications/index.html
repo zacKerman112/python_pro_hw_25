@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Push Notifications</title>
+    <style>
+      body {
+        align-items: center;
+        background: #f5f7fb;
+        color: #172033;
+        display: flex;
+        font-family: Arial, sans-serif;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+      }
+
+      .card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 16px 40px rgba(23, 32, 51, 0.12);
+        padding: 32px;
+        width: min(520px, calc(100vw - 32px));
+      }
+
+      .form {
+        display: flex;
+        gap: 12px;
+        margin: 24px 0;
+      }
+
+      input {
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        flex: 1;
+        font-size: 16px;
+        padding: 12px 14px;
+      }
+
+      button {
+        background: #2563eb;
+        border: 0;
+        border-radius: 10px;
+        color: white;
+        cursor: pointer;
+        font-size: 16px;
+        padding: 12px 18px;
+      }
+
+      button:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+      }
+
+      .status {
+        color: #64748b;
+        font-size: 14px;
+      }
+
+      .notifications {
+        display: grid;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .notification {
+        background: #eff6ff;
+        border-left: 4px solid #2563eb;
+        border-radius: 10px;
+        padding: 12px 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>Push notifications</h1>
+      <p class="status" id="status">Підключення...</p>
+
+      <form class="form" id="notification-form">
+        <input
+          id="message-input"
+          autocomplete="off"
+          placeholder="Введіть повідомлення"
+          type="text"
+        />
+        <button id="send-button" type="submit" disabled>Надіслати</button>
+      </form>
+
+      <section class="notifications" id="notifications"></section>
+    </main>
+
+    <script>
+      const form = document.querySelector("#notification-form");
+      const input = document.querySelector("#message-input");
+      const sendButton = document.querySelector("#send-button");
+      const statusElement = document.querySelector("#status");
+      const notificationsElement = document.querySelector("#notifications");
+      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+      const socket = new WebSocket(`${protocol}://${window.location.host}/ws/notifications/`);
+
+      socket.addEventListener("open", () => {
+        statusElement.textContent = "Підключено";
+        sendButton.disabled = false;
+      });
+
+      socket.addEventListener("message", (event) => {
+        const data = JSON.parse(event.data);
+        addNotification(data.message);
+      });
+
+      socket.addEventListener("close", () => {
+        statusElement.textContent = "Відключено";
+        sendButton.disabled = true;
+      });
+
+      socket.addEventListener("error", () => {
+        statusElement.textContent = "Помилка підключення";
+        sendButton.disabled = true;
+      });
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const message = input.value.trim();
+        if (!message || socket.readyState !== WebSocket.OPEN) {
+          return;
+        }
+
+        socket.send(JSON.stringify({ message }));
+        input.value = "";
+        input.focus();
+      });
+
+      function addNotification(message) {
+        const notification = document.createElement("div");
+        notification.className = "notification";
+        notification.textContent = message;
+        notificationsElement.prepend(notification);
+      }
+    </script>
+  </body>
+</html>

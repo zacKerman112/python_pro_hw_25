@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Online Users Counter</title>
+    <style>
+      body {
+        align-items: center;
+        background: #f5f7fb;
+        color: #172033;
+        display: flex;
+        font-family: Arial, sans-serif;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+      }
+
+      .card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 16px 40px rgba(23, 32, 51, 0.12);
+        padding: 40px;
+        text-align: center;
+        width: min(360px, calc(100vw - 32px));
+      }
+
+      .count {
+        color: #2563eb;
+        font-size: 72px;
+        font-weight: 700;
+        line-height: 1;
+        margin: 16px 0;
+      }
+
+      .status {
+        color: #64748b;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>Користувачів онлайн</h1>
+      <div class="count" id="online-count">0</div>
+      <div class="status" id="status">Підключення...</div>
+    </main>
+
+    <script>
+      const countElement = document.querySelector("#online-count");
+      const statusElement = document.querySelector("#status");
+      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+      const socket = new WebSocket(`${protocol}://${window.location.host}/ws/online/`);
+
+      socket.addEventListener("open", () => {
+        statusElement.textContent = "Підключено";
+      });
+
+      socket.addEventListener("message", (event) => {
+        const data = JSON.parse(event.data);
+        countElement.textContent = data.online;
+      });
+
+      socket.addEventListener("close", () => {
+        statusElement.textContent = "Відключено";
+      });
+
+      socket.addEventListener("error", () => {
+        statusElement.textContent = "Помилка підключення";
+      });
+    </script>
+  </body>
+</html>

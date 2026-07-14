@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Реєстрація</title>
+    <style>
+      body {
+        align-items: center;
+        background: #f5f7fb;
+        color: #172033;
+        display: flex;
+        font-family: Arial, sans-serif;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+      }
+
+      .card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 16px 40px rgba(23, 32, 51, 0.12);
+        padding: 32px;
+        width: min(420px, calc(100vw - 32px));
+      }
+
+      form {
+        display: grid;
+        gap: 16px;
+        margin-top: 24px;
+      }
+
+      input {
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        font-size: 16px;
+        padding: 12px 14px;
+        width: 100%;
+      }
+
+      button {
+        background: #2563eb;
+        border: 0;
+        border-radius: 10px;
+        color: white;
+        cursor: pointer;
+        font-size: 16px;
+        padding: 12px 18px;
+      }
+
+      a {
+        color: #2563eb;
+      }
+
+      .errorlist {
+        color: #dc2626;
+        margin: 0;
+        padding-left: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>Реєстрація</h1>
+      <p><a href="{% url 'index' %}">Назад до чату</a></p>
+
+      <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Створити акаунт</button>
+      </form>
+
+      <p>Вже є акаунт? <a href="{% url 'login' %}">Увійти</a></p>
+    </main>
+  </body>
+</html>
